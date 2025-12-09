@@ -50,7 +50,7 @@ st.markdown("""
     h1 {
         text-align: left;
         margin-bottom: 0.5rem;
-        color: #1F2937 !important;
+        color: #FFFFFF !important;
     }
 
     /* Typing indicator styling */
@@ -97,8 +97,8 @@ st.markdown("""
         padding: 14px 20px;
         font-size: 15px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        background-color: #FFFFFF !important;
-        color: #1F2937 !important;
+        background-color: #1F2937 !important;
+        color: white !important;
     }
 
     .stTextInput input:focus {
@@ -438,6 +438,7 @@ if st.session_state.is_typing:
 
 
     st.rerun()
+
 
 
 
