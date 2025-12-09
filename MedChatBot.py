@@ -36,7 +36,7 @@ st.markdown("""
     <style>
     /* Main background */
     .main {
-        background-color: #E8F4F8;
+        background-color: #111111;
     }
 
     /* Center the chat container */
@@ -438,6 +438,7 @@ if st.session_state.is_typing:
 
 
     st.rerun()
+
 
 
 
