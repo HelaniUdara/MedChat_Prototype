@@ -258,7 +258,7 @@ with chat_container:
                 msg["content"],
                 is_user=False,
                 key=f"msg_{i}",
-                avatar_style=ai_avatar  # Use your custom AI image
+                avatar_style="bottts"  # Use your custom AI image
             )
 
 # Show typing indicator when agent is processing
@@ -438,6 +438,7 @@ if st.session_state.is_typing:
 
 
     st.rerun()
+
 
 
 
