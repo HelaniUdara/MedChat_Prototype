@@ -66,7 +66,7 @@ st.markdown("""
     .typing-indicator span {
         height: 8px;
         width: 8px;
-        background-color: #10B981;
+        background-color: #6B7280;
         border-radius: 50%;
         display: inline-block;
         margin: 0 2px;
@@ -104,11 +104,11 @@ st.markdown("""
     .stTextInput input:focus {
         border-color: #4F46E5;
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
-        background-color: #FFFFFF !important;
+        background-color: #1F2937 !important;
     }
 
     .stTextInput input::placeholder {
-        color: #6B7280;
+        color: #9CA3AF;
     }
 
     /* Send button styling */
@@ -438,6 +438,7 @@ if st.session_state.is_typing:
 
 
     st.rerun()
+
 
 
 
