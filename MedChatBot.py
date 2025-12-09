@@ -36,7 +36,7 @@ st.markdown("""
     <style>
     /* Main background */
     .main {
-        background-color: #F7F9FC;
+        background-color: #E8F4F8;
     }
 
     /* Center the chat container */
@@ -65,7 +65,7 @@ st.markdown("""
     .typing-indicator span {
         height: 8px;
         width: 8px;
-        background-color: #6B7280;
+        background-color: #10B981;
         border-radius: 50%;
         display: inline-block;
         margin: 0 2px;
@@ -96,23 +96,23 @@ st.markdown("""
         padding: 14px 20px;
         font-size: 15px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        background-color: #1F2937 !important;
-        color: white !important;
+        background-color: #FFFFFF !important;
+        color: #1F2937 !important;
     }
 
     .stTextInput input:focus {
         border-color: #4F46E5;
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
-        background-color: #1F2937 !important;
+        background-color: #FFFFFF !important;
     }
 
     .stTextInput input::placeholder {
-        color: #9CA3AF;
+        color: #6B7280;
     }
 
     /* Send button styling */
     .stButton > button {
-        background-color: #4F46E5;
+        background-color: #06B6D4;
         color: white;
         border: none;
         border-radius: 50%;
@@ -129,7 +129,7 @@ st.markdown("""
     }
 
     .stButton > button:hover {
-        background-color: #4338CA;
+        background-color: #0891B2;
         transform: scale(1.05);
     }
 
@@ -434,5 +434,6 @@ if st.session_state.is_typing:
 
     # Turn off typing indicator
     st.session_state.is_typing = False
+
 
     st.rerun()
