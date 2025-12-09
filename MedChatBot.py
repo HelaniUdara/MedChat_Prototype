@@ -250,7 +250,7 @@ with chat_container:
                 msg["content"],
                 is_user=True,
                 key=f"msg_{i}",
-                logo=user_avatar  # Use your custom user image
+                avatar=user_avatar  # Use your custom user image
             )
         else:
             # AI assistant message with custom image
@@ -258,7 +258,7 @@ with chat_container:
                 msg["content"],
                 is_user=False,
                 key=f"msg_{i}",
-                logo=ai_avatar  # Use your custom AI image
+                avatar=ai_avatar  # Use your custom AI image
             )
 
 # Show typing indicator when agent is processing
@@ -438,4 +438,5 @@ if st.session_state.is_typing:
 
 
     st.rerun()
+
 
