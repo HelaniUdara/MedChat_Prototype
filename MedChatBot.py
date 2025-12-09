@@ -50,6 +50,7 @@ st.markdown("""
     h1 {
         text-align: left;
         margin-bottom: 0.5rem;
+        color: #1F2937 !important;
     }
 
     /* Typing indicator styling */
@@ -437,3 +438,4 @@ if st.session_state.is_typing:
 
 
     st.rerun()
+
