@@ -250,7 +250,7 @@ with chat_container:
                 msg["content"],
                 is_user=True,
                 key=f"msg_{i}",
-                avatar_style=user_avatar  # Use your custom user image
+                avatar_style="https://www.istockphoto.com/photos/user-avatar"  # Use your custom user image
             )
         else:
             # AI assistant message with custom image
@@ -438,6 +438,7 @@ if st.session_state.is_typing:
 
 
     st.rerun()
+
 
 
 
