@@ -269,6 +269,30 @@ if st.session_state.is_typing:
     )
 
 # ---------------------------
+#  Handle Submit
+# ---------------------------
+def handle_submit():
+    if st.session_state.user_input.strip() == "":
+        return
+
+    # Clear previous errors
+    st.session_state.last_error = None
+
+    # Store user message
+    user_message = st.session_state.user_input
+    st.session_state.messages.append({"role": "user", "content": user_message})
+
+    # Clear input box
+    st.session_state.user_input = ""
+
+    # Show typing indicator
+    st.session_state.is_typing = True
+
+    # Rerun to immediately display user message + typing indicator
+    st.rerun()
+
+
+# ---------------------------
 # INPUT BOX WITH SEND ICON
 # ---------------------------
 
@@ -283,11 +307,12 @@ with input_col:
         "Message",
         placeholder="Talk to your AI Medical Receptionist...",
         key="user_input",
-        label_visibility="collapsed"
+        label_visibility="collapsed",
+        on_change=handle_submit
     )
 
 with button_col:
-    send_button = st.button("➤", key="send_btn", help="Send message")
+    send_button = st.button("➤", key="send_btn", help="Send message", on_click=handle_submit)
 
 
 # ---------------------------
@@ -395,22 +420,6 @@ def call_n8n_agent(prompt):
 # MAIN CHAT LOGIC
 # ---------------------------
 
-if send_button and user_input:
-    # Clear previous errors
-    st.session_state.last_error = None
-
-    # Store the user input before clearing
-    user_message = user_input
-
-    # Save user message immediately
-    st.session_state.messages.append({"role": "user", "content": user_message})
-
-    # Set typing indicator
-    st.session_state.is_typing = True
-
-    # Force rerun to show user message and typing indicator
-    st.rerun()
-
 # Handle API call after rerun (when typing indicator is visible)
 if st.session_state.is_typing:
     # Get the last user message
@@ -438,6 +447,7 @@ if st.session_state.is_typing:
 
 
     st.rerun()
+
 
 
 
