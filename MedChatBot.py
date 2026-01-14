@@ -4,6 +4,7 @@ from streamlit_chat import message
 import json
 import base64
 import uuid
+import re
 
 
 # ---------------------------
@@ -20,6 +21,21 @@ def get_base64_image(image_path):
         return None
 
 
+def convert_links_to_html(text):
+    """Convert URLs in text to clickable HTML links"""
+    # Regular expression to find URLs
+    url_pattern = r'(https?://[^\s]+)'
+
+    # Replace URLs with HTML anchor tags
+    def replace_url(match):
+        url = match.group(1)
+        # Remove trailing punctuation that shouldn't be part of the URL
+        url = url.rstrip('.,;:!?)')
+        return f'<a href="{url}" target="_blank" style="color: #06B6D4; text-decoration: underline;">{url}</a>'
+
+    return re.sub(url_pattern, replace_url, text)
+
+
 # ---------------------------
 # CONFIG & PAGE SETUP
 # ---------------------------
@@ -28,7 +44,7 @@ st.set_page_config(
     page_title="MedSeek AI Receptionist",
     page_icon="🩺",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Custom CSS for ChatGPT-like UI
@@ -184,6 +200,32 @@ st.markdown("""
     .stSpinner {
         display: none !important;
     }
+
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {
+        background-color: #1F2937;
+    }
+
+    /* New Chat button styling */
+    .stButton > button[kind="primary"] {
+        width: 100%;
+        padding: 12px 20px;
+        background-color: #06B6D4 !important;
+        color: white !important;
+        border: none;
+        border-radius: 12px !important;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        height: auto !important;
+    }
+
+    .stButton > button[kind="primary"]:hover {
+        background-color: #0891B2 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -202,8 +244,28 @@ if "critical_detected" not in st.session_state:
 if "last_error" not in st.session_state:
     st.session_state.last_error = None
 
-if "is_typing" not in st.session_state:
-    st.session_state.is_typing = False
+if "is_processing" not in st.session_state:
+    st.session_state.is_processing = False
+
+if "pending_message" not in st.session_state:
+    st.session_state.pending_message = None
+
+# ---------------------------
+# SIDEBAR - NEW CHAT BUTTON
+# ---------------------------
+
+with st.sidebar:
+    st.markdown("### 💬 Chat Controls")
+
+    if st.button("➕ New Chat", key="new_chat_btn", type="primary", use_container_width=True):
+        # Reset all session state for new chat
+        st.session_state.sessionId = uuid.uuid4().hex
+        st.session_state.messages = []
+        st.session_state.critical_detected = False
+        st.session_state.last_error = None
+        st.session_state.is_processing = False
+        st.session_state.pending_message = None
+        st.rerun()
 
 # ---------------------------
 # HEADER
@@ -228,92 +290,6 @@ if st.session_state.last_error:
         unsafe_allow_html=True
     )
 
-# ---------------------------
-# CHAT CONTAINER
-# ---------------------------
-
-chat_container = st.container()
-
-# Load avatar images (change these filenames to match your actual files)
-user_avatar_base64 = get_base64_image("User.png")  # Change to your user image filename
-ai_avatar_base64 = get_base64_image("Medical_Assistant.png")  # Change to your AI image filename
-
-# Create data URIs for the avatars
-user_avatar = f"data:image/png;base64,{user_avatar_base64}" if user_avatar_base64 else None
-ai_avatar = f"data:image/png;base64,{ai_avatar_base64}" if ai_avatar_base64 else None
-
-with chat_container:
-    for i, msg in enumerate(st.session_state.messages):
-        if msg["role"] == "user":
-            # User message with custom image
-            message(
-                msg["content"],
-                is_user=True,
-                key=f"msg_{i}",
-                avatar_style="avataaars"  # Use your custom user image
-            )
-        else:
-            # AI assistant message with custom image
-            message(
-                msg["content"],
-                is_user=False,
-                key=f"msg_{i}",
-                avatar_style="bottts"  # Use your custom AI image
-            )
-
-# Show typing indicator when agent is processing
-if st.session_state.is_typing:
-    st.markdown(
-        '<div class="typing-indicator"><span></span><span></span><span></span></div>',
-        unsafe_allow_html=True
-    )
-
-# ---------------------------
-#  Handle Submit
-# ---------------------------
-def handle_submit():
-    if st.session_state.user_input.strip() == "":
-        return
-
-    # Clear previous errors
-    st.session_state.last_error = None
-
-    # Store user message
-    user_message = st.session_state.user_input
-    st.session_state.messages.append({"role": "user", "content": user_message})
-
-    # Clear input box
-    st.session_state.user_input = ""
-
-    # Show typing indicator
-    st.session_state.is_typing = True
-
-    # Rerun to immediately display user message + typing indicator
-    st.rerun()
-
-
-# ---------------------------
-# INPUT BOX WITH SEND ICON
-# ---------------------------
-
-# Add some spacing before input
-st.markdown("<br>", unsafe_allow_html=True)
-
-# Create columns for input and button - better ratio
-input_col, button_col = st.columns([0.92, 0.08])
-
-with input_col:
-    user_input = st.text_input(
-        "Message",
-        placeholder="Talk to your AI Medical Receptionist...",
-        key="user_input",
-        label_visibility="collapsed",
-        on_change=handle_submit
-    )
-
-with button_col:
-    send_button = st.button("➤", key="send_btn", help="Send message", on_click=handle_submit)
-
 
 # ---------------------------
 # N8N API CALL FUNCTION
@@ -323,9 +299,7 @@ def call_n8n_agent(prompt):
     """
     Call the N8N webhook
     """
-    # webhook_url = "https://n8n.fexcon.com.au/webhook/06b637e2-5bb9-4bbb-bdff-b86b01106de7"
-
-    webhook_url = "https://n8n.fexcon.com.au/webhook/e3f4a3c6-3891-4859-a4ca-99d0cbefae37/chat"
+    webhook_url = "https://n8n.fexcon.com.au/webhook/5d6e7b99-30db-47ba-9279-3a8364709cbf/chat"
     try:
         payload = {
             "sessionId": st.session_state.sessionId,
@@ -417,16 +391,13 @@ def call_n8n_agent(prompt):
 
 
 # ---------------------------
-# MAIN CHAT LOGIC
+# PROCESS PENDING MESSAGE
 # ---------------------------
 
-# Handle API call after rerun (when typing indicator is visible)
-if st.session_state.is_typing:
-    # Get the last user message
-    last_message = st.session_state.messages[-1]["content"]
-
+# Process the pending message BEFORE rendering chat
+if st.session_state.pending_message and st.session_state.is_processing:
     # Call your N8N workflow
-    bot_result = call_n8n_agent(last_message)
+    bot_result = call_n8n_agent(st.session_state.pending_message)
 
     # Check for errors
     if bot_result.get("error"):
@@ -435,24 +406,122 @@ if st.session_state.is_typing:
     # Extract agent reply
     agent_reply = bot_result.get("reply", "I couldn't process the request.")
 
-    # Detect critical warning in agent response
-    if "call 111" in agent_reply.lower() or "emergency" in agent_reply.lower():
+    # Detect critical warning in agent response - only when explicitly telling to call 111
+    if "call 111" in agent_reply.lower() and ("immediately" in agent_reply.lower() or "now" in agent_reply.lower()):
         st.session_state.critical_detected = True
 
     # Save assistant message
     st.session_state.messages.append({"role": "assistant", "content": agent_reply})
 
-    # Turn off typing indicator
-    st.session_state.is_typing = False
-
-
+    # Clear processing state
+    st.session_state.is_processing = False
+    st.session_state.pending_message = None
     st.rerun()
 
+# ---------------------------
+# CHAT CONTAINER
+# ---------------------------
+
+chat_container = st.container()
+
+# Load avatar images
+user_avatar_base64 = get_base64_image("User.png")
+ai_avatar_base64 = get_base64_image("Medical_Assistant.png")
+
+# Create data URIs for the avatars
+user_avatar = f"data:image/png;base64,{user_avatar_base64}" if user_avatar_base64 else None
+ai_avatar = f"data:image/png;base64,{ai_avatar_base64}" if ai_avatar_base64 else None
+
+with chat_container:
+    # Render all messages
+    for i, msg in enumerate(st.session_state.messages):
+        if msg["role"] == "user":
+            message(
+                msg["content"],
+                is_user=True,
+                key=f"msg_{i}",
+                avatar_style="avataaars"
+            )
+        else:
+            # Convert links to clickable HTML for assistant messages
+            content_with_links = convert_links_to_html(msg["content"])
+
+            # Use st.markdown instead of message for assistant to support HTML links
+            col1, col2 = st.columns([0.08, 0.92])
+            with col1:
+                if ai_avatar_base64:
+                    st.markdown(
+                        f'<img src="data:image/png;base64,{ai_avatar_base64}" style="width: 40px; height: 40px; border-radius: 50%;">',
+                        unsafe_allow_html=True)
+            with col2:
+                st.markdown(
+                    f'<div style="background-color: #374151; padding: 12px 16px; border-radius: 18px; margin-bottom: 10px; color: white;">{content_with_links}</div>',
+                    unsafe_allow_html=True
+                )
+
+    # Show typing indicator when processing
+    if st.session_state.is_processing:
+        st.markdown(
+            '<div class="typing-indicator"><span></span><span></span><span></span></div>',
+            unsafe_allow_html=True
+        )
 
 
+# ---------------------------
+# Handle Submit
+# ---------------------------
+
+def handle_submit():
+    # Prevent multiple submissions
+    if st.session_state.is_processing:
+        return
+
+    if st.session_state.user_input.strip() == "":
+        return
+
+    # Clear previous errors
+    st.session_state.last_error = None
+
+    # Store user message
+    user_message = st.session_state.user_input
+    st.session_state.messages.append({"role": "user", "content": user_message})
+
+    # Set processing state
+    st.session_state.pending_message = user_message
+    st.session_state.is_processing = True
+
+    # Clear input box
+    st.session_state.user_input = ""
 
 
+# ---------------------------
+# INPUT BOX WITH SEND ICON
+# ---------------------------
 
+# Add some spacing before input
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Create columns for input and button
+input_col, button_col = st.columns([0.92, 0.08])
+
+with input_col:
+    user_input = st.text_input(
+        "Message",
+        placeholder="Talk to your AI Medical Receptionist...",
+        key="user_input",
+        label_visibility="collapsed",
+        on_change=handle_submit,
+        disabled=st.session_state.is_processing  # Disable during processing
+    )
+
+with button_col:
+    send_button = st.button(
+        "➤",
+        key="send_btn",
+        help="Send message",
+        on_click=handle_submit,
+        disabled=st.session_state.is_processing  # Disable during processing
+    )
 
 
 
